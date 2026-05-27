@@ -1,16 +1,23 @@
 """
 Mô phỏng HITL trên terminal: chạy graph tới interrupt, hỏi approve/reject, resume bằng Command.
-Chạy: python demo_hitl_terminal.py
+Chạy: python scripts/demo_hitl_terminal.py
 """
+import sys
 import uuid
+from pathlib import Path
+
+_ROOT = Path(__file__).resolve().parents[1]
+_SRC = _ROOT / "src"
+if str(_SRC) not in sys.path:
+    sys.path.insert(0, str(_SRC))
 
 from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage
 from langgraph.types import Command
 
-load_dotenv()
+load_dotenv(_ROOT / ".env")
 
-from graph_builder import get_app_graph  # noqa: E402
+from amr_swarm.graph_builder import get_app_graph  # noqa: E402
 
 
 def main() -> None:

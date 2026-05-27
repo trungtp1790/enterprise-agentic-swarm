@@ -10,7 +10,8 @@ __pycache__/
 
 # Runtime / generated
 data/
-charts/*.png
+charts/*
+!charts/.gitkeep
 *.db
 
 # IDE / OS

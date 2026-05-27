@@ -46,17 +46,25 @@ flowchart LR
 
 ```
 enterprise-agentic-swarm/
-├── state_schema.py      # Module 1: AgentState + Pydantic models
-├── tools_config.py      # Module 2: web_search_tool, python_sandbox_tool
-├── agents_logic.py      # Module 3: researcher / analyst / critic nodes + LLM
-├── llm_utils.py         # Retry 429, delay giữa các node
-├── graph_builder.py     # Module 4: StateGraph, routing, checkpointer
-├── app.py               # Module 5: Streamlit UI
-├── api.py               # Module 5: FastAPI endpoints
-├── demo_hitl_terminal.py# Module 4: demo HITL trên terminal
-├── charts/              # Biểu đồ PNG do Analyst tạo
-├── data/                # SQLite checkpoint (nếu bật)
+├── src/amr_swarm/           # Core package (LangGraph)
+│   ├── state_schema.py      # Module 1: AgentState + Pydantic
+│   ├── tools_config.py      # Module 2: Tavily + Python REPL
+│   ├── agents_logic.py      # Module 3: agent nodes + LLM
+│   ├── llm_utils.py         # Retry 429, delay giữa các node
+│   ├── graph_builder.py     # Module 4: StateGraph, HITL, checkpointer
+│   └── paths.py             # charts/, data/ tại repo root
+├── apps/
+│   ├── streamlit_app.py     # Module 5: Streamlit UI
+│   └── api.py               # Module 5: FastAPI
+├── scripts/
+│   └── demo_hitl_terminal.py
+├── tests/
+├── charts/                  # Biểu đồ PNG (runtime)
+├── data/                    # SQLite checkpoint (nếu bật)
+├── app.py                   # Wrapper: streamlit run app.py
+├── api.py                   # Wrapper: uvicorn api:app
 ├── requirements.txt
+├── pyproject.toml
 ├── .env.example
 └── README.md
 ```
@@ -153,6 +161,7 @@ python -m venv .venv
 source .venv/bin/activate
 
 pip install -r requirements.txt
+pip install -e .
 cp .env.example .env
 ```
 
@@ -175,6 +184,7 @@ Cần truy cập được **`api.tavily.com`** (DNS/mạng). Kiểm tra: `nslook
 
 ```bash
 streamlit run app.py
+# hoặc: streamlit run apps/streamlit_app.py
 ```
 
 Mở trình duyệt, nhập câu hỏi (vd. *Phân tích nhanh cổ phiếu FPT*), bấm **Chạy phân tích**.
@@ -185,6 +195,7 @@ Terminal 1:
 
 ```bash
 uvicorn api:app --reload --host 127.0.0.1 --port 8000
+# hoặc: uvicorn apps.api:app --reload --host 127.0.0.1 --port 8000
 ```
 
 Terminal 2 — trong `.env`:
@@ -201,7 +212,7 @@ streamlit run app.py
 ### HITL trên terminal
 
 ```bash
-python demo_hitl_terminal.py
+python scripts/demo_hitl_terminal.py
 ```
 
 ---
@@ -233,58 +244,6 @@ python demo_hitl_terminal.py
 | `AMR_TAVILY_MAX_RETRIES` | `3` | Retry khi lỗi mạng Tavily |
 
 Xem đầy đủ trong [`.env.example`](.env.example).
-
----
-
-## Prompt thực thi theo module (tham khảo)
-
-Các prompt dưới đây là **gợi ý khi xây dựng từ đầu**; repo hiện tại đã triển khai sẵn và mở rộng (node `human_review`, Tavily retry, alias Gemini).
-
-<details>
-<summary><strong>Module 1 — State & Pydantic</strong></summary>
-
-> Tôi đang xây dựng hệ thống Multi-Agent bằng LangGraph. Hãy giúp tôi viết code Python định nghĩa một TypedDict tên là AgentState. State này cần các trường: messages (list chứa lịch sử hội thoại), raw_data (string), chart_path (string), revision_count (integer), và sender (string để biết Agent nào vừa gửi message). Đồng thời, hãy tạo các Pydantic BaseModel để chuẩn hóa dữ liệu đầu ra cho Agent Researcher (trả về tóm tắt thông tin) và Agent Critic (trả về quyết định phê duyệt 'APPROVE' hoặc 'REJECT').
-
-**File:** `state_schema.py`
-
-</details>
-
-<details>
-<summary><strong>Module 2 — Tools</strong></summary>
-
-> Sử dụng LangChain @tool decorator, hãy viết cho tôi 2 công cụ: web_search_tool (Tavily) và python_sandbox_tool (PythonREPLTool). Chú ý xử lý exception để tool không làm crash hệ thống khi code sinh ra bị lỗi.
-
-**File:** `tools_config.py`
-
-</details>
-
-<details>
-<summary><strong>Module 3 — Agents</strong></summary>
-
-> Khởi tạo researcher_node, analyst_node, critic_node với System Prompt rõ ràng; Researcher dùng web search, Analyst vẽ biểu đồ vào `./charts/`, Critic APPROVE/REJECT. Dùng Gemini hoặc gpt-4o-mini.
-
-**File:** `agents_logic.py`
-
-</details>
-
-<details>
-<summary><strong>Module 4 — Graph & HITL</strong></summary>
-
-> Kết nối START → researcher → analyst → critic; conditional edge REJECT → researcher; cấu hình interrupt và checkpointer; demo terminal.
-
-**File:** `graph_builder.py`, `demo_hitl_terminal.py`  
-**Mở rộng trong repo:** thêm node `human_review` + `interrupt()` trước Critic.
-
-</details>
-
-<details>
-<summary><strong>Module 5 — Streamlit & FastAPI</strong></summary>
-
-> Streamlit: sidebar input, nút chạy, real-time status, nút Approve/Reject khi interrupt, hiển thị báo cáo và biểu đồ.
-
-**File:** `app.py`, `api.py`
-
-</details>
 
 ---
 

@@ -1,7 +1,6 @@
 import os
 import sqlite3
 import warnings
-from pathlib import Path
 
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
@@ -11,12 +10,11 @@ try:
 except ModuleNotFoundError:  # LangGraph cũ hoặc bản tối giản không gói sqlite
     SqliteSaver = None  # type: ignore[misc, assignment]
 
-from agents_logic import analyst_node, critic_node, human_review_node, researcher_node
-from state_schema import AgentState
+from amr_swarm.agents_logic import analyst_node, critic_node, human_review_node, researcher_node
+from amr_swarm.paths import DATA_DIR
+from amr_swarm.state_schema import AgentState
 
-_ROOT = Path(__file__).resolve().parent
-_DATA = _ROOT / "data"
-_DEFAULT_SQLITE = _DATA / "checkpoints.db"
+_DEFAULT_SQLITE = DATA_DIR / "checkpoints.db"
 
 
 def make_checkpointer():
@@ -30,7 +28,7 @@ def make_checkpointer():
                 stacklevel=2,
             )
             return InMemorySaver()
-        _DATA.mkdir(parents=True, exist_ok=True)
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
         conn = sqlite3.connect(str(_DEFAULT_SQLITE), check_same_thread=False)
         return SqliteSaver(conn)
     return InMemorySaver()
@@ -66,8 +64,6 @@ def compile_app(checkpointer=None):
     """
     Biên dịch graph với checkpointer.
     HITL: dùng interrupt() trong node human_review (tương thích Command(resume=...)).
-    Module 4 gợi ý interrupt_before=['critic']; ở đây tách bước human_review + interrupt
-    để Streamlit có thể gửi approve/reject có cấu trúc trước khi chạy Critic.
     """
     cp = checkpointer or make_checkpointer()
     return build_workflow().compile(checkpointer=cp)

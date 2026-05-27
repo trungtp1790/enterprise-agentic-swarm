@@ -9,15 +9,15 @@ try:
 except ModuleNotFoundError:  # pragma: no cover
     ChatOpenAI = None  # type: ignore
 
-from llm_utils import (
+from amr_swarm.llm_utils import (
     invoke_with_retry,
     is_model_not_found_error,
     is_rate_limit_error,
     llm_pause,
     should_try_fallback_model,
 )
-from state_schema import AgentState, CriticDecision, ResearcherOutput
-from tools_config import (
+from amr_swarm.state_schema import AgentState, CriticDecision, ResearcherOutput
+from amr_swarm.tools_config import (
     DEFAULT_CHART_PATH,
     SEARCH_FAILED_PREFIX,
     is_search_failure,

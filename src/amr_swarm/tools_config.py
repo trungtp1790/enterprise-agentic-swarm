@@ -1,16 +1,14 @@
 import os
 import re
 import time
-from pathlib import Path
 from typing import Any, List
 
 from langchain_core.tools import tool
 from langchain_experimental.tools import PythonREPLTool
 
-# Thư mục lưu biểu đồ (tuyệt đối để REPL luôn ghi đúng chỗ)
-CHARTS_DIR = Path(__file__).resolve().parent / "charts"
+from amr_swarm.paths import CHARTS_DIR, DEFAULT_CHART_PATH
+
 CHARTS_DIR.mkdir(parents=True, exist_ok=True)
-DEFAULT_CHART_PATH = CHARTS_DIR / "chart_output.png"
 
 SEARCH_FAILED_PREFIX = "[SEARCH_FAILED]"
 _python_repl = PythonREPLTool()
